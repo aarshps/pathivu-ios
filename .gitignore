@@ -1,0 +1,50 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+!default.xcworkspace/
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+.build/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# Generated files (XcodeGen produces Pathivu.xcodeproj at build time)
+*.generated.swift
+
+# macOS
+.DS_Store
+
+# Fastlane (if added later)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Secrets — never commit
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+AuthKey_*.p8
+ExportOptions.plist
+GoogleService-Info.plist
+fastlane/.env
+.env
+.env.local
+
+# Tooling
+node_modules/
+.idea/
+.vscode/

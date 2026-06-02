@@ -1,0 +1,94 @@
+name: iOS Build (unsigned)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & validate
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          xcodebuild -showsdks | head -40
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate placeholder GoogleService-Info.plist (if missing)
+        run: |
+          PLIST="Pathivu/Resources/GoogleService-Info.plist"
+          if [ ! -f "$PLIST" ]; then
+            echo "::warning::Using placeholder Firebase config — sign-in and Firestore won't actually work in this build."
+            cat > "$PLIST" <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>API_KEY</key><string>placeholder</string>
+            <key>BUNDLE_ID</key><string>com.hora.pathivu</string>
+            <key>CLIENT_ID</key><string>000000000000-placeholder.apps.googleusercontent.com</string>
+            <key>REVERSED_CLIENT_ID</key><string>com.googleusercontent.apps.000000000000-placeholder</string>
+            <key>GCM_SENDER_ID</key><string>000000000000</string>
+            <key>GOOGLE_APP_ID</key><string>1:000000000000:ios:placeholder</string>
+            <key>PROJECT_ID</key><string>hora-pathivu</string>
+            <key>STORAGE_BUCKET</key><string>hora-pathivu.appspot.com</string>
+            <key>IS_ADS_ENABLED</key><false/>
+            <key>IS_ANALYTICS_ENABLED</key><false/>
+            <key>IS_APPINVITE_ENABLED</key><false/>
+            <key>IS_GCM_ENABLED</key><true/>
+            <key>IS_SIGNIN_ENABLED</key><true/>
+          </dict>
+          </plist>
+          EOF
+          fi
+
+      - name: Generate AppIcon (if missing)
+        run: |
+          ICON="Pathivu/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
+          if [ ! -f "$ICON" ]; then
+            echo "::notice::Rendering placeholder AppIcon — replace before App Store submission."
+            swift scripts/generate_icon.swift "$ICON"
+          fi
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Pathivu.xcodeproj \
+            -scheme Pathivu
+
+      - name: Build for device (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Pathivu.xcodeproj \
+            -scheme Pathivu \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -sdk iphoneos \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcbeautify || (echo "::error::Build failed" && exit 1)
