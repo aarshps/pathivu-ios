@@ -5,6 +5,11 @@ tracker. SwiftUI, iOS 26+ Liquid Glass, Firebase Auth + Firestore, Sign in with 
 Google Sign-In. Same Firebase project (`hora-pathivu`), same Firestore documents — sign in
 on either platform and see the same habits, streaks and check-offs.
 
+There's also a **web app** — **[pathivu-web.vercel.app](https://pathivu-web.vercel.app)**
+([repo](https://github.com/aarshps/pathivu-web), Next.js on Vercel) — talking to the same
+`hora-pathivu` Firestore, so habits sync live across Android, iOS, and web. It shipped first
+so users have something to use while this App Store release is pending.
+
 **Pathivu** (Malayalam *പതിവ്* — "habit / routine") lets you build good habits, quit bad
 ones, and watch your streaks grow.
 
